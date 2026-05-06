@@ -9,7 +9,7 @@ def load_file(file):
     elif file.name.endswith(".xlsx"):
         return pd.read_excel(file)
     else:
-        raise ValueError("Unsupported file format. Upload CSV or Excel file.")
+        raise ValueError("Unsupported file format")
 
 
 # =========================
@@ -21,21 +21,19 @@ def load_and_merge(leads_file, counselling_file, applications_file, enrollment_f
     applications = load_file(applications_file)
     enrollment = load_file(enrollment_file)
 
-    # Merge all datasets
     df = leads.merge(counselling, on="Lead_ID", how="left")
     df = df.merge(applications, on="Lead_ID", how="left")
     df = df.merge(enrollment, on="Lead_ID", how="left")
 
-    # Clean missing values
-    df.fillna("No", inplace=True)
+    # ✅ SAFE NULL HANDLING
+    for col in df.columns:
+        if df[col].dtype == "object":
+            df[col] = df[col].fillna("No")
+        else:
+            df[col] = df[col].fillna(pd.NA)
 
     return df
-    # Handle missing values properly
-    for col in df.columns:
-    if df[col].dtype == "object":
-        df[col] = df[col].fillna("No")
-    else:
-        df[col] = df[col].fillna(pd.NA)
+
 
 # =========================
 # FUNNEL METRICS
@@ -102,7 +100,7 @@ def drop_off_analysis(total, counselling, application, enrolled):
 
 
 # =========================
-# STAGE-WISE ANALYSIS TABLE
+# STAGE ANALYSIS
 # =========================
 def stage_analysis(df):
     total, counselling, application, enrolled = funnel_metrics(df)
@@ -114,17 +112,14 @@ def stage_analysis(df):
 
     stage_df = pd.DataFrame(data)
 
-    # Conversion %
     stage_df["Conversion %"] = stage_df["Count"].pct_change().fillna(1) * 100
-
-    # Drop-off %
     stage_df["Drop-off %"] = 100 - stage_df["Conversion %"]
 
     return stage_df
 
 
 # =========================
-# BEST PERFORMERS (INSIGHTS)
+# BEST PERFORMERS
 # =========================
 def best_performers(df):
     channel_df = channel_analysis(df)
