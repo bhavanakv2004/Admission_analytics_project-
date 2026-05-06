@@ -30,7 +30,12 @@ def load_and_merge(leads_file, counselling_file, applications_file, enrollment_f
     df.fillna("No", inplace=True)
 
     return df
-
+    # Handle missing values properly
+    for col in df.columns:
+    if df[col].dtype == "object":
+        df[col] = df[col].fillna("No")
+    else:
+        df[col] = df[col].fillna(pd.NA)
 
 # =========================
 # FUNNEL METRICS
